@@ -25,6 +25,46 @@ public class Application {
 
     private LocalDateTime appliedAt = LocalDateTime.now();
 
+    public Long getId(){
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getStudent() {
+        return student;
+    }
+
+    public void setStudent(User student) {
+        this.student = student;
+    }
+
+    public Status getStatus(){
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public Vacancy getVacancy(){
+        return vacancy;
+    }
+
+    public void setVacancy(Vacancy vacancy) {
+        this.vacancy = vacancy;
+    }
+
+    public LocalDateTime getAppliedAt(){
+        return appliedAt;
+    }
+
+    public void setAppliedAt(LocalDateTime appliedAt) {
+        this.appliedAt = appliedAt;
+    }
+
     public enum Status { PENDING, ACCEPTED, REJECTED }
 
 }
