@@ -2,6 +2,8 @@ package com.unijob.platform.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "vacancies")
@@ -14,6 +16,12 @@ public class Vacancy {
     private String description;
     private String type;
     private boolean active = true;
+
+    @ManyToOne
+    private Employer employer;
+
+    @OneToMany(mappedBy = "vacancy". cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<VacancySkill> vacancySkills = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -57,14 +65,11 @@ public class Vacancy {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @ManyToOne
-    private User employer;
-
-    public User getEmployer(){
+    public Employer getEmployer(){
         return employer;
     }
 
-    public void setEmployer(User employer) {
+    public void setEmployer(Employer employer) {
         this.employer = employer;
     }
 

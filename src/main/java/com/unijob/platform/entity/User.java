@@ -2,6 +2,8 @@ package com.unijob.platform.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "Users")
@@ -14,6 +16,12 @@ public class User {
     private String name;
     private String email;
     private String password;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserSkill> userSkills = new HashSet<>();
+
+    @ManyToMany(mappedBy = "users")
+    private Set<Skill> skills = new HashSet<>();
 
     public Long getId() {
         return id;
