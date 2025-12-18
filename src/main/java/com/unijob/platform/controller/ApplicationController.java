@@ -25,4 +25,9 @@ public class ApplicationController {
     public Application getOne(@PathVariable Long id){
         return applicationRepository.findById(id).orElseThrow();
     }
+
+    @PostMapping
+    public Application create(@RequestBody Application app) {
+        return applicationRepository.save(app);
+    }
 }
