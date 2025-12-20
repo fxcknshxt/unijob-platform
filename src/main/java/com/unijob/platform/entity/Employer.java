@@ -1,5 +1,6 @@
 package com.unijob.platform.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class Employer {
     private User user;
 
     @OneToMany(mappedBy = "employer")
+    @JsonIgnore
     private Set<Vacancy> vacancies = new HashSet<>();
 
     public Long getId() {

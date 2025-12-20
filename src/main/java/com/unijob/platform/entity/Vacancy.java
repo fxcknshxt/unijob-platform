@@ -1,5 +1,6 @@
 package com.unijob.platform.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -7,7 +8,6 @@ import java.util.HashSet;
 
 @Entity
 @Table(name = "vacancies")
-
 public class Vacancy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +23,7 @@ public class Vacancy {
     private Employer employer;
 
     @OneToMany(mappedBy = "vacancy", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<VacancySkill> vacancySkills = new HashSet<>();
 
     public Long getId() {

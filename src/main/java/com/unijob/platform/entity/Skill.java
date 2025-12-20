@@ -1,5 +1,6 @@
 package com.unijob.platform.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,9 +16,11 @@ public class Skill {
     private String name;
 
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<UserSkill> userSkills = new HashSet<>();
 
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<VacancySkill> vacancySkills = new HashSet<>();
 
     public Long getId() {
