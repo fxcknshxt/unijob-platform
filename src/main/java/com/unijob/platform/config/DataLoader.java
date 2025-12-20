@@ -35,7 +35,6 @@ public class DataLoader {
             vac1.setActive(true);
             vac1.setEmployer(employer);
             vacRepo.save(vac1);
-            System.out.println("✅ СОХРАНЕНА вакансия 1: ID=" + vac1.getId() + ", title=" + vac1.getTitle());
 
             Vacancy vac2 = new Vacancy();
             vac2.setTitle("Лаборант");
@@ -44,7 +43,6 @@ public class DataLoader {
             vac2.setActive(true);
             vac2.setEmployer(employer);
             vacRepo.save(vac2);
-            System.out.println("✅ СОХРАНЕНА вакансия 2: ID=" + vac2.getId() + ", title=" + vac2.getTitle());
 
             Skill java = new Skill();
             java.setName("Java");
@@ -95,7 +93,6 @@ public class DataLoader {
             msg.setContent("Удачи в поиске работы");
             messageRepo.save(msg);
 
-            System.out.println("=== ВСЕГО ВАКАНСИЙ В БАЗЕ: " + vacRepo.count() + " ===");
         };
     }
 }
