@@ -14,11 +14,11 @@ public class Skill {
 
     private String name;
 
-    @ManyToMany(mappedBy = "skills")
-    private Set<User> users = new HashSet<>();
+    @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserSkill> userSkills = new HashSet<>();
 
-    @ManyToMany(mappedBy = "skills")
-    private Set<Vacancy> vacancies = new HashSet<>();
+    @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<VacancySkill> vacancySkills = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -36,19 +36,19 @@ public class Skill {
         this.name = name;
     }
 
-    public Set<User> getUsers() {
-        return users;
+    public Set<UserSkill> getUsers() {
+        return userSkills;
     }
 
-    public void setUsers(Set<User> users) {
-        this.users = users;
+    public void setUsers(Set<UserSkill> userSkills) {
+        this.userSkills = userSkills;
     }
 
-    public Set<Vacancy> getVacancies() {
-        return vacancies;
+    public Set<VacancySkill> getVacancies() {
+        return vacancySkills;
     }
 
-    public void setVacancies(Set<Vacancy> vacancies) {
-        this.vacancies = vacancies;
+    public void setVacancies(Set<VacancySkill> vacancySkills) {
+        this.vacancySkills = vacancySkills;
     }
 }

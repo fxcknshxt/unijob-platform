@@ -1,9 +1,6 @@
 package com.unijob.platform.entity;
 
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import jakarta.persistence.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,9 +12,11 @@ public class Application {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "student_id")
     private User student;
 
     @ManyToOne
+    @JoinColumn(name = "vacancy_id")
     private Vacancy vacancy;
 
     @Enumerated(EnumType.STRING)

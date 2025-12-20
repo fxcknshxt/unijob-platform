@@ -20,8 +20,12 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserSkill> userSkills = new HashSet<>();
 
-    @ManyToMany(mappedBy = "users")
-    private Set<Skill> skills = new HashSet<>();
+    @OneToOne(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Resume resume;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Employer employer;
+
 
     public Long getId() {
         return id;

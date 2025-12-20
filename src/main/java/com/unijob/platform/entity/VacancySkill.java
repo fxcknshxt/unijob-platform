@@ -10,9 +10,11 @@ public class VacancySkill {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "vacancy_id")
     private Vacancy vacancy;
 
     @ManyToOne
+    @JoinColumn(name = "skill_id")
     private Skill skill;
 
 

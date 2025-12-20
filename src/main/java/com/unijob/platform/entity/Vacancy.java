@@ -16,11 +16,13 @@ public class Vacancy {
     private String description;
     private String type;
     private boolean active = true;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne
+    @JoinColumn(name = "employer_id")
     private Employer employer;
 
-    @OneToMany(mappedBy = "vacancy". cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "vacancy", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<VacancySkill> vacancySkills = new HashSet<>();
 
     public Long getId() {
@@ -62,8 +64,6 @@ public class Vacancy {
     public void setActive(boolean active){
         this.active = active;
     }
-
-    private LocalDateTime createdAt = LocalDateTime.now();
 
     public Employer getEmployer(){
         return employer;

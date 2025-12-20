@@ -15,6 +15,7 @@ public class Employer {
     private String website;
 
     @OneToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToMany(mappedBy = "employer")

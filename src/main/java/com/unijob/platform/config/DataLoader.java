@@ -26,8 +26,7 @@ public class DataLoader {
             employer.setUser(emp);
             employer.setCompanyName("УрФУ");
             employer.setWebsite("https://urfu.ru/ru/");
-            employerRepo.save(employer);
-
+            employer = employerRepo.save(employer);
 
             Vacancy vac1 = new Vacancy();
             vac1.setTitle("Ассистент преподавателя");
@@ -93,7 +92,6 @@ public class DataLoader {
             msg.setReceiver(emp);
             msg.setContent("Удачи в поиске работы");
             messageRepo.save(msg);
-
         };
     }
 }

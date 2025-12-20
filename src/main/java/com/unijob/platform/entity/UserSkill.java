@@ -11,9 +11,11 @@ public class UserSkill {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
+    @JoinColumn(name = "skill_id")
     private Skill skill;
 
     public Long getId() {

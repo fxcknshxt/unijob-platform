@@ -11,7 +11,9 @@ public class Resume {
     private Long id;
 
     @OneToOne
+    @JoinColumn(name = "student_id")
     private User student;
+
     private String text;
     private LocalDateTime updatedAt = LocalDateTime.now();
 
