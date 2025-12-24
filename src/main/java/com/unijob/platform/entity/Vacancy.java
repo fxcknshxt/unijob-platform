@@ -16,6 +16,7 @@ public class Vacancy {
     private String description;
     private String type;
     private boolean active = true;
+    private String location;
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne
@@ -72,6 +73,14 @@ public class Vacancy {
 
     public void setEmployer(Employer employer) {
         this.employer = employer;
+    }
+
+    public String getLocation(){
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public LocalDateTime getCreatedAt(){

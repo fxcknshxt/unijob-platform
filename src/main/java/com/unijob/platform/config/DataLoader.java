@@ -13,7 +13,8 @@ public class DataLoader {
     CommandLineRunner initDatabase(UserRepository userRepo, VacancyRepository vacRepo, SkillRepository skillRepo,
                                    UserSkillRepository userSkillRepo, VacancySkillRepository vacancySkillRepo,
                                    ResumeRepository resumeRepo, EmployerRepository employerRepo,
-                                   NotificationRepository notificationRepo, MessageRepository messageRepo){
+                                   NotificationRepository notificationRepo, MessageRepository messageRepo,
+                                   ReviewRepository reviewRepository){
         return args -> {
             User emp = new User();
             emp.setName("Луффи");
@@ -21,6 +22,20 @@ public class DataLoader {
             emp.setPassword("qwe123");
             emp.setRole(User.Role.EMPLOYER);
             emp = userRepo.save(emp);
+
+            User studentUser = new User();
+            studentUser.setName("Наруто Узумаки");
+            studentUser.setEmail("uzumaki@naruto.ru");
+            studentUser.setPassword("naruto123");
+            studentUser.setRole(User.Role.STUDENT);
+            studentUser = userRepo.save(studentUser);
+
+            Review review1 = new Review();
+            review1.setAuthor(emp);
+            review1.setTarget(studentUser);
+            review1.setRating(5);
+            review1.setText("Крутой перец!");
+            reviewRepository.save(review1);
 
             Employer employer = new Employer();
             employer.setUser(emp);
@@ -39,7 +54,7 @@ public class DataLoader {
             Vacancy vac2 = new Vacancy();
             vac2.setTitle("Лаборант");
             vac2.setDescription("Работа с данными");
-            vac2.setType("Laboratory Assistant");
+            vac2.setType("Assistant");
             vac2.setActive(true);
             vac2.setEmployer(employer);
             vacRepo.save(vac2);

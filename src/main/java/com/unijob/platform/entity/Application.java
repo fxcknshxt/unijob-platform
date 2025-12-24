@@ -24,6 +24,8 @@ public class Application {
 
     private LocalDateTime appliedAt = LocalDateTime.now();
 
+    private String coverLetter;
+
     public Long getId(){
         return id;
     }
@@ -62,6 +64,14 @@ public class Application {
 
     public void setAppliedAt(LocalDateTime appliedAt) {
         this.appliedAt = appliedAt;
+    }
+
+    public String getCoverLetter() {
+        return coverLetter;
+    }
+
+    public void setCoverLetter(String coverLetter) {
+        this.coverLetter = coverLetter;
     }
 
     public enum Status { PENDING, ACCEPTED, REJECTED }
