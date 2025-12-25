@@ -75,7 +75,7 @@ function VacancyPage() {
             </button>
 
             {message && (
-                <div className={`mt-3 alert ${message.includes('✅') ? 'alert-success' : 'alert-danger'}`}>
+                <div className={`mt-3 alert ${message.includes() ? 'alert-success' : 'alert-danger'}`}>
                     {message}
                 </div>
             )}

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom'
 
 function Profile() {
-    const userId = 1;
-
+    const [currentUserId, setCurrentUserId] = useState(2);
     const [user, setUser] = useState(null);
     const [applications, setApplications] = useState([]);
     const [notifications, setNotifications] = useState([]);
@@ -13,23 +13,49 @@ function Profile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [subscribeNewVacancies, setSubscribeNewVacancies] = useState(true);
+    const [availableUsers, setAvailableUsers] = useState([]);
+    const [interviews, setInterviews] = useState([]);
+
+    useEffect(() => {
+        const loadAvailableUsers = async () => {
+            try {
+                const usersRes = await axios.get('http://localhost:8080/api/users');
+                setAvailableUsers(usersRes.data);
+
+                const defaultStudent = usersRes.data.find(u => u.role === 'STUDENT');
+                if (defaultStudent) {
+                    setCurrentUserId(defaultStudent.id);
+                }
+            } catch (err) {
+                console.warn('Не удалось загрузить список пользователей:', err);
+            }
+        };
+
+        loadAvailableUsers();
+    }, []);
 
     useEffect(() => {
         const loadUserData = async () => {
             try {
                 setLoading(true);
+                setError(null);
 
-                const userRes = await axios.get(`http://localhost:8080/api/users/${userId}`);
+                const userRes = await axios.get(`http://localhost:8080/api/users/${currentUserId}`);
                 setUser(userRes.data);
 
-                const appsRes = await axios.get('http://localhost:8080/api/applications');
-                const userApps = appsRes.data.filter(app =>
-                    app.student && app.student.id === userId
-                );
-                setApplications(userApps);
+                try {
+                    const appsRes = await axios.get('http://localhost:8080/api/applications');
+                    const userApps = appsRes.data.filter(app =>
+                        app.student && app.student.id === currentUserId
+                    );
+                    setApplications(userApps);
+                } catch (appsErr) {
+                    console.warn('Заявки не загружены:', appsErr);
+                    setApplications([]);
+                }
 
                 try {
-                    const notifRes = await axios.get(`http://localhost:8080/api/notifications/user/${userId}`);
+                    const notifRes = await axios.get(`http://localhost:8080/api/notifications/user/${currentUserId}`);
                     setNotifications(notifRes.data);
                 } catch (notifErr) {
                     console.warn('Уведомления не загружены:', notifErr);
@@ -37,8 +63,7 @@ function Profile() {
                 }
 
                 try {
-                    const resumeRes = await axios.get(`http://localhost:8080/api/resumes/user/${userId}`);
-                    console.log('Резюме ответ:', resumeRes.data);
+                    const resumeRes = await axios.get(`http://localhost:8080/api/resumes/user/${currentUserId}`);
 
                     let resumeText = '';
                     if (resumeRes.data) {
@@ -47,7 +72,7 @@ function Profile() {
                         } else if (resumeRes.data.text !== undefined) {
                             resumeText = resumeRes.data.text || '';
                         } else {
-                            resumeText = resumeRes.data.text || '';
+                            resumeText = JSON.stringify(resumeRes.data);
                         }
                     }
                     setResume(resumeText);
@@ -57,10 +82,11 @@ function Profile() {
                 }
 
                 try {
-                    const skillsRes = await axios.get(`http://localhost:8080/api/user-skills/user/${userId}`);
+                    const skillsRes = await axios.get(`http://localhost:8080/api/user-skills/user/${currentUserId}`);
                     setSkills(skillsRes.data || []);
                 } catch (skillsErr) {
                     console.warn('Навыки не загружены:', skillsErr);
+                    setSkills([]);
                 }
 
                 setLoading(false);
@@ -69,14 +95,25 @@ function Profile() {
                 setError('Не удалось загрузить данные профиля');
                 setLoading(false);
             }
+
+            try {
+                const interviewsRes = await axios.get(`http://localhost:8080/api/interviews/user/${currentUserId}`);
+                setInterviews(interviewsRes.data || []);
+            } catch (interviewsErr) {
+                console.warn('Собеседования не загружены:', interviewsErr);
+                setInterviews([]);
+            }
+
         };
 
-        loadUserData();
-    }, [userId]);
+        if (currentUserId) {
+            loadUserData();
+        }
+    }, [currentUserId]);
 
     const saveResume = async () => {
         try {
-            await axios.post(`http://localhost:8080/api/resumes/user/${userId}`, { text: resume });
+            await axios.post(`http://localhost:8080/api/resumes/user/${currentUserId}`, { text: resume });
             alert('Резюме сохранено успешно!');
         } catch (err) {
             alert('Ошибка сохранения резюме: ' + err.message);
@@ -91,14 +128,14 @@ function Profile() {
 
         try {
             await axios.post('http://localhost:8080/api/user-skills', {
-                userId: userId,
+                userId: currentUserId,
                 skillId: parseInt(newSkillId)
             });
 
             alert('Навык добавлен!');
             setNewSkillId('');
 
-            const skillsRes = await axios.get(`http://localhost:8080/api/user-skills/user/${userId}`);
+            const skillsRes = await axios.get(`http://localhost:8080/api/user-skills/user/${currentUserId}`);
             setSkills(skillsRes.data || []);
         } catch (err) {
             alert('Ошибка: ' + (err.response?.data || err.message));
@@ -120,126 +157,79 @@ function Profile() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="container mt-4 text-center">
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Загрузка...</span>
-                </div>
-                <p className="mt-2">Загрузка профиля...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="container mt-4">
-                <div className="alert alert-danger">
-                    <h5>Ошибка</h5>
-                    <p>{error}</p>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => window.location.reload()}>
-                        Попробовать снова
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Личный кабинет студента</h2>
-                <div>
-                    <a href="/" className="btn btn-outline-primary btn-sm me-2">
-                        ← К вакансиям
-                    </a>
-                    <a href="/dashboard" className="btn btn-outline-info btn-sm">
-                        Статистика
-                    </a>
-                </div>
-            </div>
-
-            <div className="row">
-                <div className="col-md-4 mb-4">
-                    <div className="card">
-                        <div className="card-body">
-                            <h5 className="card-title">Мой профиль</h5>
-                            {user ? (
-                                <>
-                                    <div className="mb-3">
-                                        <p className="mb-1"><strong>Имя:</strong></p>
-                                        <p className="ps-3">{user.name || 'Не указано'}</p>
+    const UserSwitcher = () => (
+        <div className="card mb-4">
+            <div className="card-body">
+                <h5 className="card-title mb-3">Переключение пользователей</h5>
+                <div className="row">
+                    <div className="col-md-8">
+                        <div className="btn-group d-flex flex-wrap">
+                            {availableUsers.map(u => (
+                                <button
+                                    key={u.id}
+                                    className={`btn btn-sm m-1 ${currentUserId === u.id ? 'active' : ''}`}
+                                    style={{
+                                        backgroundColor: currentUserId === u.id ?
+                                            (u.role === 'ADMIN' ? '#dc3545' :
+                                             u.role === 'EMPLOYER' ? '#0dcaf0' : '#20c997') : 'transparent',
+                                        color: currentUserId === u.id ? 'white' : '#333',
+                                        border: `1px solid ${
+                                            u.role === 'ADMIN' ? '#dc3545' :
+                                            u.role === 'EMPLOYER' ? '#0dcaf0' : '#20c997'
+                                        }`
+                                    }}
+                                    onClick={() => setCurrentUserId(u.id)}
+                                >
+                                    <div className="small">
+                                        <strong>{u.name}</strong><br/>
+                                        <small>
+                                            {u.role === 'ADMIN' ? 'Админ' :
+                                             u.role === 'EMPLOYER' ? 'Работодатель' : 'Студент'}
+                                        </small>
                                     </div>
-                                    <div className="mb-3">
-                                        <p className="mb-1"><strong>Email:</strong></p>
-                                        <p className="ps-3">{user.email || 'Не указан'}</p>
-                                    </div>
-                                    <div className="mb-3">
-                                        <p className="mb-1"><strong>Роль:</strong></p>
-                                        <p className="ps-3">
-                                            <span className="badge bg-secondary">
-                                                {user.role || 'STUDENT'}
-                                            </span>
-                                        </p>
-                                    </div>
-                                    {user.createdAt && (
-                                        <div>
-                                            <p className="mb-1"><strong>Регистрация:</strong></p>
-                                            <p className="ps-3">
-                                                {new Date(user.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <p className="text-muted">Данные профиля не загружены</p>
-                            )}
+                                </button>
+                            ))}
                         </div>
                     </div>
-                </div>
-
-                {/* Статистика */}
-                <div className="col-md-8 mb-4">
-                    <div className="card">
-                        <div className="card-body">
-                            <h5 className="card-title">Моя статистика</h5>
-                            <div className="row text-center">
-                                <div className="col-md-3 mb-3">
-                                    <div className="border rounded p-3">
-                                        <h3 className="text-primary">{applications.length}</h3>
-                                        <p className="mb-0">Заявок</p>
-                                    </div>
-                                </div>
-                                <div className="col-md-3 mb-3">
-                                    <div className="border rounded p-3">
-                                        <h3 className="text-success">
-                                            {applications.filter(app => app.status === 'ACCEPTED').length}
-                                        </h3>
-                                        <p className="mb-0">Принято</p>
-                                    </div>
-                                </div>
-                                <div className="col-md-3 mb-3">
-                                    <div className="border rounded p-3">
-                                        <h3 className="text-warning">
-                                            {applications.filter(app => app.status === 'PENDING').length}
-                                        </h3>
-                                        <p className="mb-0">На рассмотрении</p>
-                                    </div>
-                                </div>
-                                <div className="col-md-3 mb-3">
-                                    <div className="border rounded p-3">
-                                        <h3 className="text-danger">
-                                            {notifications.filter(n => !n.read).length}
-                                        </h3>
-                                        <p className="mb-0">Новых уведомлений</p>
-                                    </div>
-                                </div>
+                    <div className="col-md-4">
+                        <div className="border rounded p-2">
+                            <small className="text-muted">Текущий:</small>
+                            <div>
+                                <strong>{user?.name || 'Загрузка...'}</strong>
+                            </div>
+                            <div>
+                                <span className={`badge bg-${
+                                    user?.role === 'ADMIN' ? 'danger' :
+                                    user?.role === 'EMPLOYER' ? 'info' : 'success'
+                                }`}>
+                                    {user?.role || 'STUDENT'}
+                                </span>
+                                <small className="ms-2">ID: {currentUserId}</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    );
 
+    const renderRoleSpecificContent = () => {
+        if (!user) return null;
+
+        switch (user.role) {
+            case 'STUDENT':
+                return renderStudentContent();
+            case 'EMPLOYER':
+                return renderEmployerContent();
+            case 'ADMIN':
+                return renderAdminContent();
+            default:
+                return renderStudentContent();
+        }
+    };
+
+    const renderStudentContent = () => (
+        <>
             <div className="card mb-4">
                 <div className="card-body">
                     <div className="d-flex justify-content-between align-items-center mb-3">
@@ -325,6 +315,41 @@ function Profile() {
                 <div className="col-md-6 mb-4">
                     <div className="card h-100">
                         <div className="card-body">
+                            <h5 className="card-title">Моё резюме</h5>
+                            <textarea
+                                className="form-control mb-3"
+                                rows="6"
+                                value={resume}
+                                onChange={(e) => setResume(e.target.value)}
+                                placeholder="Расскажите о своих навыках, опыте, образовании..."
+                                style={{ resize: 'vertical' }}
+                            />
+                            <div className="d-flex justify-content-between">
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={saveResume}
+                                    disabled={!resume.trim()}
+                                >
+                                    Сохранить резюме
+                                </button>
+                                <button
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => {
+                                        if (resume.trim() && window.confirm('Очистить резюме?')) {
+                                            setResume('');
+                                        }
+                                    }}
+                                >
+                                    Очистить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-md-6 mb-4">
+                    <div className="card h-100">
+                        <div className="card-body">
                             <h5 className="card-title">Уведомления ({notifications.length})</h5>
 
                             <div className="mb-3">
@@ -386,48 +411,11 @@ function Profile() {
                         </div>
                     </div>
                 </div>
-
-                <div className="col-md-6 mb-4">
-                    <div className="card h-100">
-                        <div className="card-body">
-                            <h5 className="card-title">Моё резюме</h5>
-                            <textarea
-                                className="form-control mb-3"
-                                rows="6"
-                                value={resume}
-                                onChange={(e) => setResume(e.target.value)}
-                                placeholder="Расскажите о своих навыках, опыте, образовании..."
-                                style={{ resize: 'vertical' }}
-                            />
-                            <div className="d-flex justify-content-between">
-                                <button
-                                    className="btn btn-primary"
-                                    onClick={saveResume}
-                                    disabled={!resume.trim()}
-                                >
-                                    Сохранить резюме
-                                </button>
-                                <button
-                                    className="btn btn-outline-secondary"
-                                    onClick={() => {
-                                        if (resume.trim()) {
-                                            if (window.confirm('Очистить резюме?')) {
-                                                setResume('');
-                                            }
-                                        }
-                                    }}
-                                >
-                                    Очистить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div className="card mb-4">
                 <div className="card-body">
-                    <h5 className="card-title">⚡ Мои навыки ({skills.length})</h5>
+                    <h5 className="card-title">Мои навыки ({skills.length})</h5>
 
                     <div className="mb-3">
                         <div className="input-group">
@@ -446,16 +434,13 @@ function Profile() {
                             </button>
                         </div>
                         <small className="text-muted">
-                            ID навыков можно посмотреть в <a href="http://localhost:8080/swagger-ui.html" target="_blank" rel="noopener noreferrer">Swagger</a> или в <a href="/dashboard">Dashboard</a>
+                            ID навыков можно посмотреть в <a href="http://localhost:8080/swagger-ui.html" target="_blank" rel="noopener noreferrer">Swagger</a>
                         </small>
                     </div>
 
                     {skills.length === 0 ? (
                         <div className="text-center py-3">
                             <p className="text-muted">У вас пока нет добавленных навыков</p>
-                            <p>
-                                <small>Примеры ID: 1 (Java), 2 (Python), 3 (Excel)</small>
-                            </p>
                         </div>
                     ) : (
                         <div className="d-flex flex-wrap gap-2">
@@ -469,12 +454,6 @@ function Profile() {
                             ))}
                         </div>
                     )}
-
-                    <div className="mt-3">
-                        <small className="text-muted">
-                            Навыки влияют на рекомендации вакансий. Добавьте навыки, которые у вас есть.
-                        </small>
-                    </div>
                 </div>
             </div>
 
@@ -483,7 +462,7 @@ function Profile() {
                     <h5 className="card-title">Рекомендованные вакансии</h5>
                     <button className="btn btn-sm btn-outline-primary mb-3"
                         onClick={() => {
-                            axios.get(`http://localhost:8080/api/recommendations/user/${userId}`)
+                            axios.get(`http://localhost:8080/api/recommendations/user/${currentUserId}`)
                                 .then(res => {
                                     if (res.data.length > 0) {
                                         const list = res.data.map(v =>
@@ -500,13 +479,216 @@ function Profile() {
                     <p className="card-text">
                         <small className="text-muted">
                             Система анализирует ваши навыки и рекомендует подходящие вакансии.
-                            Чем больше навыков у вас указано, тем точнее рекомендации.
                         </small>
                     </p>
                 </div>
             </div>
+        </>
+    );
 
-            <div className="card">
+    const renderEmployerContent = () => (
+        <div className="card">
+            <div className="card-body">
+                <h5 className="card-title">Панель работодателя</h5>
+                <div className="row">
+                    <div className="col-md-6 mb-3">
+                        <div className="card h-100">
+                            <div className="card-body">
+                                <h6>Мои вакансии</h6>
+                                <button className="btn btn-primary w-100 mb-2"
+                                    onClick={() => alert('Форма создания вакансии')}>
+                                    + Создать вакансию
+                                </button>
+                                <button className="btn btn-outline-secondary w-100"
+                                    onClick={() => window.location.href = '/'}>
+                                    Просмотреть все вакансии
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                        <div className="card h-100">
+                            <div className="card-body">
+                                <h6>Заявки кандидатов</h6>
+                                <button className="btn btn-info w-100"
+                                    onClick={() => alert('Переход к заявкам')}>
+                                    Просмотреть заявки ({applications.length})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p className="text-muted mt-3">
+                    <small>Как работодатель вы можете создавать вакансии и просматривать заявки от студентов.</small>
+                </p>
+            </div>
+        </div>
+    );
+
+    const renderAdminContent = () => (
+        <div className="card">
+            <div className="card-body">
+                <h5 className="card-title">Панель администратора</h5>
+                <div className="alert alert-warning">
+                    <strong>Полные права доступа</strong>
+                    <p className="mb-0">Вы имеете доступ ко всем функциям системы.</p>
+                </div>
+                <div className="d-flex flex-wrap gap-2">
+                    <a href="/admin-panel" className="btn btn-danger">
+                        Перейти в админ-панель
+                    </a>
+                    <button className="btn btn-outline-dark"
+                        onClick={() => window.open('http://localhost:8080/h2-console', '_blank')}>
+                        H2 Console
+                    </button>
+                    <button className="btn btn-outline-info"
+                        onClick={() => window.open('http://localhost:8080/swagger-ui.html', '_blank')}>
+                        Swagger API
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <div className="container mt-4 text-center">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Загрузка...</span>
+                </div>
+                <p className="mt-2">Загрузка профиля пользователя #{currentUserId}...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mt-4">
+                <div className="alert alert-danger">
+                    <h5>Ошибка</h5>
+                    <p>{error}</p>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => window.location.reload()}>
+                        Попробовать снова
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="container mt-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2>Личный кабинет</h2>
+                <div>
+                    <a href="/" className="btn btn-outline-primary btn-sm me-2">
+                        ← К вакансиям
+                    </a>
+                </div>
+            </div>
+
+            <UserSwitcher />
+
+            <div className="row mb-4">
+                <div className="col-md-4 mb-3">
+                    <div className="card h-100">
+                        <div className="card-body">
+                            <h5 className="card-title">Профиль</h5>
+                            {user ? (
+                                <>
+                                    <div className="mb-3">
+                                        <p className="mb-1"><strong>Имя:</strong></p>
+                                        <p className="ps-3">{user.name || 'Не указано'}</p>
+                                    </div>
+                                    <div className="mb-3">
+                                        <p className="mb-1"><strong>Email:</strong></p>
+                                        <p className="ps-3">{user.email || 'Не указан'}</p>
+                                    </div>
+                                    <div className="mb-3">
+                                        <p className="mb-1"><strong>Роль:</strong></p>
+                                        <p className="ps-3">
+                                            <span className={`badge bg-${
+                                                user.role === 'ADMIN' ? 'danger' :
+                                                user.role === 'EMPLOYER' ? 'info' : 'success'
+                                            }`}>
+                                                {user.role === 'ADMIN' ? 'Администратор' :
+                                                 user.role === 'EMPLOYER' ? 'Работодатель' : 'Студент'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    {user.createdAt && (
+                                        <div>
+                                            <p className="mb-1"><strong>Регистрация:</strong></p>
+                                            <p className="ps-3">
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <p className="text-muted">Данные профиля не загружены</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-md-8 mb-3">
+                    <div className="card h-100">
+                        <div className="card-body">
+                            <h5 className="card-title">Статистика</h5>
+                            <div className="row text-center">
+                                <div className="col-md-3 mb-3">
+                                    <div className="border rounded p-3">
+                                        <h3 className="text-primary">{applications.length}</h3>
+                                        <p className="mb-0">
+                                            {user?.role === 'STUDENT' ? 'Заявок' :
+                                             user?.role === 'EMPLOYER' ? 'Вакансий' : 'Пользователей'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="col-md-3 mb-3">
+                                    <div className="border rounded p-3">
+                                        <h3 className="text-success">
+                                            {user?.role === 'STUDENT' ?
+                                                applications.filter(app => app.status === 'ACCEPTED').length :
+                                                notifications.length
+                                            }
+                                        </h3>
+                                        <p className="mb-0">
+                                            {user?.role === 'STUDENT' ? 'Принято' : 'Уведомлений'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="col-md-3 mb-3">
+                                    <div className="border rounded p-3">
+                                        <h3 className="text-warning">{skills.length}</h3>
+                                        <p className="mb-0">Навыков</p>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-3 mb-3">
+                                    <div className="border rounded p-3">
+                                        <h3 className="text-info">{interviews.length}</h3>
+                                        <p className="mb-0">Собеседований</p>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-3 mb-3">
+                                    <div className="border rounded p-3">
+                                        <h3 className="text-danger">
+                                            {notifications.filter(n => !n.read).length}
+                                        </h3>
+                                        <p className="mb-0">Новых увед.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {renderRoleSpecificContent()}
+
+            <div className="card mt-4">
                 <div className="card-body">
                     <h5 className="card-title">Быстрые действия</h5>
                     <div className="d-flex flex-wrap gap-2">
@@ -516,6 +698,9 @@ function Profile() {
                         >
                             Поиск вакансий
                         </button>
+                        <Link to="/interviews" className="btn btn-outline-warning">
+                                        Мои собеседования
+                        </Link>
                         <button
                             className="btn btn-outline-success"
                             onClick={() => {
@@ -527,7 +712,7 @@ function Profile() {
                                     });
                             }}
                         >
-                            Посмотреть все навыки
+                            Все навыки
                         </button>
                         <button
                             className="btn btn-outline-info"
@@ -537,32 +722,46 @@ function Profile() {
                         </button>
                         <button
                             className="btn btn-outline-warning"
-                            onClick={() => {
-                                if (window.confirm('Обновить данные профиля?')) {
-                                    window.location.reload();
-                                }
-                            }}
+                            onClick={() => window.location.reload()}
                         >
-                            Обновить данные
+                            Обновить
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-4 small text-muted">
-                <details>
-                    <summary>Отладочная информация (для разработки)</summary>
-                    <pre className="mt-2 p-2 bg-light rounded" style={{ fontSize: '12px' }}>
-                        User ID: {userId}
-                        Заявок: {applications.length}
-                        Уведомлений: {notifications.length}
-                        Навыков: {skills.length}
-                        User: {JSON.stringify(user, null, 2)}
-                    </pre>
-                </details>
-            </div>
         </div>
     );
+    {interviews.length > 0 && (
+        <div className="card mb-4">
+            <div className="card-body">
+                <h5 className="card-title">Ближайшие собеседования</h5>
+                <div className="list-group">
+                    {interviews
+                        .filter(i => i.status === 'SCHEDULED')
+                        .slice(0, 3)
+                        .map(interview => (
+                            <div key={interview.id} className="list-group-item">
+                                <div className="d-flex justify-content-between">
+                                    <div>
+                                        <strong>{interview.application?.vacancy?.title}</strong>
+                                        <div className="small">{interview.location}</div>
+                                    </div>
+                                    <div className="text-end">
+                                        <div className="text-primary">
+                                            {interview.interviewDate ?
+                                                new Date(interview.interviewDate).toLocaleDateString() :
+                                                'Дата не указана'}
+                                        </div>
+                                        <span className="badge bg-warning">{interview.status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            </div>
+        </div>
+    )}
 }
 
 export default Profile;

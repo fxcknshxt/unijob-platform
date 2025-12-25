@@ -1,0 +1,140 @@
+@startuml University Jobs Platform - Полная ERD
+
+entity "User" {
+  * id : LONG <<PK>>
+  --
+  * name : VARCHAR
+  * email : VARCHAR
+  * password : VARCHAR
+  * role : ENUM(STUDENT, EMPLOYER, ADMIN)
+  * created_at : TIMESTAMP
+}
+
+entity "Employer" {
+  * id : LONG <<PK>>
+  --
+  * company_name : VARCHAR
+  * website : VARCHAR
+  * user_id : LONG <<FK>>
+}
+
+entity "Vacancy" {
+  * id : LONG <<PK>>
+  --
+  * title : VARCHAR
+  * description : TEXT
+  * type : VARCHAR
+  * active : BOOLEAN
+  * location : VARCHAR
+  * created_at : TIMESTAMP
+  * employer_id : LONG <<FK>>
+}
+
+entity "Application" {
+  * id : LONG <<PK>>
+  --
+  * status : ENUM(PENDING, ACCEPTED, REJECTED)
+  * cover_letter : TEXT
+  * applied_at : TIMESTAMP
+  * student_id : LONG <<FK>>
+  * vacancy_id : LONG <<FK>>
+}
+
+entity "Interview" {
+  * id : LONG <<PK>>
+  --
+  * interview_date : TIMESTAMP
+  * location : VARCHAR
+  * interview_type : VARCHAR
+  * status : VARCHAR
+  * notes : TEXT
+  * created_at : TIMESTAMP
+  * application_id : LONG <<FK>>
+}
+
+entity "Skill" {
+  * id : LONG <<PK>>
+  --
+  * name : VARCHAR
+}
+
+entity "Resume" {
+  * id : LONG <<PK>>
+  --
+  * text : TEXT
+  * updated_at : TIMESTAMP
+  * student_id : LONG <<FK>>
+}
+
+entity "Notification" {
+  * id : LONG <<PK>>
+  --
+  * text : VARCHAR
+  * read : BOOLEAN
+  * created_at : TIMESTAMP
+  * user_id : LONG <<FK>>
+}
+
+entity "Message" {
+  * id : LONG <<PK>>
+  --
+  * content : TEXT
+  * sent_at : TIMESTAMP
+  * sender_id : LONG <<FK>>
+  * receiver_id : LONG <<FK>>
+}
+
+entity "Review" {
+  * id : LONG <<PK>>
+  --
+  * rating : INTEGER
+  * text : TEXT
+  * created_at : TIMESTAMP
+  * author_id : LONG <<FK>>
+  * target_id : LONG <<FK>>
+  * application_id : LONG <<FK>>
+}
+
+entity "UserSkill" {
+  * id : LONG <<PK>>
+  --
+  * user_id : LONG <<FK>>
+  * skill_id : LONG <<FK>>
+}
+
+entity "VacancySkill" {
+  * id : LONG <<PK>>
+  --
+  * vacancy_id : LONG <<FK>>
+  * skill_id : LONG <<FK>>
+}
+
+User ||..o{ Employer : "is"
+User ||..o{ Resume : "has"
+User ||..o{ Notification : "receives"
+User ||..o{ Message : "sends/receives"
+User ||..o{ Review : "writes/receives"
+User ||..o{ Application : "submits"
+User }o..o{ Skill : "has skills" via UserSkill
+
+Employer ||..o{ Vacancy : "posts"
+Vacancy ||..o{ Application : "receives"
+Vacancy }o..o{ Skill : "requires" via VacancySkill
+Application ||..o{ Interview : "has"
+Application ||..o| Review : "reviewed by"
+
+note right of Interview
+  <b>Новая функциональность:</b>
+  • Календарь собеседований
+  • Тип: ONLINE/OFFLINE/PHONE
+  • Статусы: SCHEDULED/COMPLETED/CANCELLED
+end note
+
+note top of User
+  <b>Центральная сущность:</b>
+  • STUDENT - студенты
+  • EMPLOYER - работодатели
+  • ADMIN - администраторы
+end note
+
+@enduml

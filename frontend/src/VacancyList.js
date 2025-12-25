@@ -67,9 +67,6 @@ function VacancyList() {
                         <a href="/profile" className="btn btn-outline-success btn-sm me-2">
                             Мой профиль
                         </a>
-                        <a href="/dashboard" className="btn btn-outline-info btn-sm">
-                            Статистика
-                        </a>
                     </div>
                 </div>
             </nav>
@@ -220,16 +217,6 @@ function VacancyList() {
                     ))}
                 </div>
             )}
-
-            <details className="mt-4">
-                <summary className="text-muted small">Отладочная информация</summary>
-                <pre className="mt-2 p-2 bg-light rounded small">
-                    Всего вакансий: {vacancies.length}
-                    Поиск: "{searchTerm}"
-                    Тип фильтра: "{typeFilter}"
-                    Показано: {filteredVacancies.length}
-                </pre>
-            </details>
         </div>
     );
 }

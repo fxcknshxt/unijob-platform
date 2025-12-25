@@ -59,8 +59,14 @@ public class ApplicationController {
     @ApiResponse(responseCode = "200", description = "Заявка успешно создана")
     @ApiResponse(responseCode = "400", description = "Неверные данные")
     public Map<String, Object> create(@RequestBody Application app) {
+        System.out.println("Подача заявки от пользователя: " + app.getStudent().getId());
+
         User student = userRepository.findById(app.getStudent().getId())
                 .orElseThrow(() -> new RuntimeException("Студент не найден"));
+
+        if (student.getRole() != User.Role.STUDENT){
+            throw new RuntimeException("Только студенты могут подавать заявки! Роль пользователя: " + student.getRole());
+        }
 
         Vacancy vacancy = vacancyRepository.findById(app.getVacancy().getId())
                 .orElseThrow(() -> new RuntimeException("Вакансия не найдена"));
@@ -102,7 +108,6 @@ public class ApplicationController {
         app.setStatus(newStatus);
         applicationRepository.save(app);
 
-        // Создаём уведомление для студента
         Notification notification = new Notification();
         notification.setUser(app.getStudent());
         notification.setText("Статус вашей заявки на вакансию '" +
